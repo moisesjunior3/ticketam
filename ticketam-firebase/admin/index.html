@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TicketAM – Painel Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════
+       TELA DE LOGIN
+  ══════════════════════════════════════ -->
+  <div id="tela-login">
+    <div class="login-card">
+      <div class="login-logo">Ticket<span>AM</span></div>
+      <p class="login-sub">Painel de administração</p>
+
+      <div class="campo">
+        <label>E-mail</label>
+        <input type="email" id="login-email" placeholder="admin@ticketam.com.br" />
+      </div>
+      <div class="campo">
+        <label>Senha</label>
+        <input type="password" id="login-senha" placeholder="••••••••" />
+      </div>
+
+      <button class="btn-login" onclick="login()">Entrar</button>
+      <div class="login-erro" id="login-erro"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       TELA ADMIN
+  ══════════════════════════════════════ -->
+  <div id="tela-admin">
+
+    <nav class="admin-nav">
+      <div class="admin-logo">Ticket<span>AM</span> <small>Admin</small></div>
+      <div class="admin-user">
+        <span id="admin-email"></span>
+        <button class="btn-logout" onclick="logout()">Sair</button>
+      </div>
+    </nav>
+
+    <div class="admin-body">
+      <div class="admin-header">
+        <h1>Eventos</h1>
+        <button class="btn-novo" onclick="abrirFormulario()">+ Novo evento</button>
+      </div>
+
+      <div id="lista-eventos">
+        <p style="color:var(--cinza-texto)">Carregando…</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════
+       MODAL – FORMULÁRIO DE EVENTO
+  ══════════════════════════════════════ -->
+  <div id="modal-form">
+    <div class="form-card">
+
+      <div class="form-header">
+        <h2 id="form-titulo">Novo evento</h2>
+        <button class="btn-fechar-form" onclick="fecharFormulario()">×</button>
+      </div>
+
+      <form class="form-body" id="form-evento" onsubmit="return false">
+
+        <!-- Nome -->
+        <div class="f-campo">
+          <label>Nome do evento *</label>
+          <input type="text" id="f-nome" placeholder="Ex: Show do Thiaguinho" />
+        </div>
+
+        <!-- Local -->
+        <div class="f-campo">
+          <label>Local *</label>
+          <input type="text" id="f-local" placeholder="Ex: Teatro Amazonas, Centro" />
+        </div>
+
+        <div class="form-row">
+          <!-- Emoji -->
+          <div class="f-campo">
+            <label>Emoji do evento</label>
+            <input type="text" id="f-emoji" placeholder="🎵" maxlength="4" />
+          </div>
+          <!-- Cor de fundo (gradiente CSS) -->
+          <div class="f-campo">
+            <label>Cor de fundo (CSS gradient)</label>
+            <input type="text" id="f-cor" placeholder="linear-gradient(135deg,#1a1a2e,#16213e)" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <!-- Categoria -->
+          <div class="f-campo">
+            <label>Categoria *</label>
+            <select id="f-categoria">
+              <option value="shows">Shows</option>
+              <option value="teatro">Teatro</option>
+              <option value="festival">Festivais</option>
+              <option value="esporte">Esportes</option>
+              <option value="humor">Humor</option>
+              <option value="outros">Outros</option>
+            </select>
+          </div>
+          <!-- Label da categoria -->
+          <div class="f-campo">
+            <label>Label exibida no card</label>
+            <input type="text" id="f-catLabel" placeholder="Ex: Show, Festival..." />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <!-- Classificação -->
+          <div class="f-campo">
+            <label>Classificação etária</label>
+            <input type="text" id="f-class" placeholder="Livre / 10 / 12 / 16 / 18" />
+          </div>
+          <!-- Total de vagas -->
+          <div class="f-campo">
+            <label>Total de vagas *</label>
+            <input type="number" id="f-vagas" placeholder="100" min="1" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <!-- Data início -->
+          <div class="f-campo">
+            <label>Início *</label>
+            <input type="datetime-local" id="f-inicio" />
+          </div>
+          <!-- Data fim -->
+          <div class="f-campo">
+            <label>Fim *</label>
+            <input type="datetime-local" id="f-fim" />
+          </div>
+        </div>
+
+        <!-- Tipos de ingresso -->
+        <div>
+          <div class="opcoes-header">
+            <span>Tipos de ingresso *</span>
+            <button type="button" class="btn-add-opcao" onclick="novaOpcao()">+ Adicionar tipo</button>
+          </div>
+          <div id="opcoes-lista"></div>
+        </div>
+
+      </form>
+
+      <div class="form-footer">
+        <span class="form-msg" id="form-msg"></span>
+        <button class="btn-salvar" onclick="salvarEvento()">Salvar evento</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Firebase SDKs (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+  <!-- Config e lógica -->
+  <script src="../js/firebase-config.js"></script>
+  <script src="admin.js"></script>
+
+</body>
+</html>

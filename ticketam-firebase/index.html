@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TicketAM – Ingressos em Manaus</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════
+       NAVBAR
+  ══════════════════════════════════════ -->
+  <nav>
+    <div class="logo">Ticket<span>AM</span></div>
+    <div class="nav-links">
+      <a href="#eventos">Eventos</a>
+      <a href="#">Artistas</a>
+      <a href="#">Como funciona</a>
+    </div>
+    <button class="btn-nav">Entrar</button>
+  </nav>
+
+  <!-- ══════════════════════════════════════
+       HERO
+  ══════════════════════════════════════ -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+      <div class="hero-tag">Manaus, Amazonas · Tempo real</div>
+      <h1>Viva os melhores<br><em>eventos</em><br>da cidade.</h1>
+      <p>Shows, festivais, teatro, esportes e muito mais. Ingressos atualizados em tempo real — nunca perca um evento.</p>
+      <div class="hero-ctas">
+        <a href="#eventos" class="btn-primary">Ver eventos agora</a>
+        <a href="admin/"   class="btn-secondary">Área do produtor</a>
+      </div>
+      <div class="hero-stats">
+        <div>
+          <div class="stat-num" id="contador-eventos">—</div>
+          <div class="stat-label">Eventos ativos</div>
+        </div>
+        <div>
+          <div class="stat-num">48k</div>
+          <div class="stat-label">Ingressos vendidos</div>
+        </div>
+        <div>
+          <div class="stat-num">4.9</div>
+          <div class="stat-label">Avaliação</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════
+       GRADE DE EVENTOS (preenchida pelo Firebase)
+  ══════════════════════════════════════ -->
+  <section class="section" id="eventos">
+    <div class="section-header">
+      <h2 class="section-title">Eventos em Manaus</h2>
+      <a href="#" class="ver-todos">Atualização em tempo real 🔴</a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros">
+      <button class="filtro-btn ativo" data-cat="todos"    onclick="filtrar(this,'todos')">Todos</button>
+      <button class="filtro-btn"       data-cat="shows"    onclick="filtrar(this,'shows')">Shows</button>
+      <button class="filtro-btn"       data-cat="teatro"   onclick="filtrar(this,'teatro')">Teatro</button>
+      <button class="filtro-btn"       data-cat="festival" onclick="filtrar(this,'festival')">Festivais</button>
+      <button class="filtro-btn"       data-cat="esporte"  onclick="filtrar(this,'esporte')">Esportes</button>
+      <button class="filtro-btn"       data-cat="humor"    onclick="filtrar(this,'humor')">Humor</button>
+    </div>
+
+    <!-- Cards injetados pelo app.js via onSnapshot -->
+    <div class="eventos-grid" id="eventos-grid">
+      <div id="loading-eventos">
+        <div class="spinner"></div>
+        <p>Carregando eventos em tempo real…</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════
+       BANNER CTA
+  ══════════════════════════════════════ -->
+  <div class="banner-cta">
+    <div class="banner-text">
+      <h3>Organize seu evento em Manaus</h3>
+      <p>Cadastre, publique e venda ingressos em tempo real com a TicketAM.</p>
+    </div>
+    <a href="admin/" class="btn-banner">Criar evento →</a>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════ -->
+  <footer>
+    <div>
+      <div class="footer-logo">Ticket<span>AM</span></div>
+      <p class="footer-desc">A plataforma de ingressos de Manaus. Compre com segurança, receba no celular.</p>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-titulo">Explorar</div>
+      <a href="#">Shows</a><a href="#">Teatro</a><a href="#">Festivais</a><a href="#">Esportes</a><a href="#">Humor</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-titulo">Empresa</div>
+      <a href="#">Sobre nós</a><a href="#">Para produtores</a><a href="#">Blog</a><a href="#">Contato</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-titulo">Ajuda</div>
+      <a href="#">Central de ajuda</a><a href="#">Política de reembolso</a><a href="#">Termos de uso</a><a href="#">Privacidade</a>
+    </div>
+  </footer>
+  <div class="footer-bottom">
+    <span>© 2025 TicketAM. Todos os direitos reservados. Manaus – AM.</span>
+    <span>CNPJ 00.000.000/0001-00</span>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       MODAL DE COMPRA
+  ══════════════════════════════════════ -->
+  <div class="overlay" id="overlay" onclick="fecharModal(event)">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <span class="modal-titulo" id="modal-titulo">Comprar ingresso</span>
+        <button class="btn-fechar" onclick="fecharModalBtn()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-evento-visual" id="modal-emoji">🎵</div>
+        <div class="modal-evento-nome"   id="modal-nome"></div>
+        <div class="modal-local-texto"   id="modal-local"></div>
+        <div class="modal-evento-info">
+          <div class="info-box">
+            <div class="info-box-label">Data</div>
+            <div class="info-box-valor" id="modal-data"></div>
+          </div>
+          <div class="info-box">
+            <div class="info-box-label">Classificação</div>
+            <div class="info-box-valor" id="modal-class"></div>
+          </div>
+        </div>
+        <div class="ingressos-opcoes" id="modal-opcoes"></div>
+        <div class="modal-total">
+          <span class="total-label">Total estimado</span>
+          <span class="total-valor"  id="modal-total">R$ 0,00</span>
+        </div>
+        <button class="btn-primary" style="width:100%;text-align:center;font-size:1rem;padding:0.9rem;" onclick="finalizarCompra()">
+          Finalizar compra →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       FIREBASE SDKs (compat — não precisam de bundler)
+  ══════════════════════════════════════ -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+  <!-- Config + App -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

@@ -8,8 +8,12 @@
 let eventoAtual = null;
 let qtds        = [];
 
-/* ── Utilitários ───────────────────────────────────────────── */
+let eventoAtual = null;
+let qtds        = [];
+
+/* ── Utilitários ────────────────────────────────────────────── */
 function formatarPreco(valor) {
+  if (valor === 0 || valor === null || valor === undefined) return 'Gratuito';
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
@@ -17,14 +21,13 @@ function formatarData(ts) {
   if (!ts) return '—';
   const d = ts.toDate ? ts.toDate() : new Date(ts);
   return d.toLocaleDateString('pt-BR', {
-    weekday: 'short', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    weekday: 'short', day: '2-digit', month: 'short',
+    year: 'numeric', hour: '2-digit', minute: '2-digit'
   });
 }
 
-function agora() { return new Date(); }
-
 function statusEvento(inicio, fim) {
-  const now = agora();
+  const now = new Date();
   const s   = inicio?.toDate ? inicio.toDate() : new Date(inicio);
   const f   = fim?.toDate    ? fim.toDate()    : new Date(fim);
   if (now >= s && now <= f) return 'ao-vivo';
@@ -32,34 +35,52 @@ function statusEvento(inicio, fim) {
   return 'encerrado';
 }
 
-/* ── Badge de status ───────────────────────────────────────── */
 function badgeStatus(status) {
   const map = {
-    'ao-vivo':  { label: '🔴 Ao vivo',  cls: 'badge-live'    },
-    'em-breve': { label: '🟡 Em breve', cls: 'badge-breve'   },
-    'encerrado':{ label: '⚫ Encerrado', cls: 'badge-encerrado'},
+    'ao-vivo':   { label: '🔴 Ao vivo',  cls: 'badge-live'     },
+    'em-breve':  { label: '🟡 Em breve', cls: 'badge-breve'    },
+    'encerrado': { label: '⚫ Encerrado', cls: 'badge-encerrado'},
   };
   const b = map[status] || map['em-breve'];
   return `<span class="evento-status-badge ${b.cls}">${b.label}</span>`;
 }
 
-/* ── Renderiza um card de evento ───────────────────────────── */
+/* ── Renderiza card ─────────────────────────────────────────── */
 function renderCard(id, ev) {
-  const status  = statusEvento(ev.dataInicio, ev.dataFim);
-  const precoMin = Math.min(...(ev.opcoes || [{ preco: 0 }]).map(o => o.preco));
-  const esgotado = ev.vagasRestantes <= 0;
+  const status   = statusEvento(ev.dataInicio, ev.dataFim);
+  const opcoes   = ev.opcoes || [];
+  const precos   = opcoes.map(o => o.preco);
+  const precoMin = precos.length ? Math.min(...precos) : 0;
+  const gratuito = precos.every(p => p === 0);
+
+  /* vagas: público = ilimitado, sem controle */
+  const publico      = ev.publico === true;
+  const vagasRestantes = publico ? Infinity : (ev.vagasRestantes ?? 0);
+  const totalVagas   = publico ? Infinity : (ev.totalVagas ?? 1);
+  const esgotado     = !publico && vagasRestantes <= 0;
+  const pct          = publico ? 100 : Math.max(0, Math.min(100, (vagasRestantes / totalVagas) * 100));
+
+  const vagasTxt = publico
+    ? 'Evento público — entrada livre'
+    : `${vagasRestantes} vaga${vagasRestantes !== 1 ? 's' : ''} restante${vagasRestantes !== 1 ? 's' : ''}`;
+
+  const precoLabel = gratuito ? 'Gratuito' : formatarPreco(precoMin);
+  const precoSmall = gratuito ? '' : '<small>a partir de</small>';
+
+  const bloqueado = esgotado || status === 'encerrado';
 
   return `
     <div class="evento-card ${status === 'encerrado' ? 'encerrado' : ''}"
          data-cat="${ev.categoria || 'outros'}"
          data-id="${id}"
-         onclick="${esgotado || status === 'encerrado' ? '' : `abrirModal('${id}')`}"
-         style="${esgotado || status === 'encerrado' ? 'cursor:not-allowed;opacity:0.55' : ''}">
+         onclick="${bloqueado ? '' : `abrirModal('${id}')`}"
+         style="${bloqueado ? 'cursor:not-allowed;opacity:0.55' : ''}">
       <div class="evento-imagem" style="background:${ev.corBg || 'linear-gradient(135deg,#161616,#222)'}">
         <span style="font-size:3.5rem">${ev.emoji || '🎵'}</span>
         <span class="evento-badge">${ev.categoriaLabel || ev.categoria || 'Evento'}</span>
         ${badgeStatus(status)}
-        ${esgotado ? '<span class="evento-destaque-badge" style="background:#555">Esgotado</span>' : ''}
+        ${gratuito ? '<span class="evento-destaque-badge" style="background:var(--verde)">Gratuito</span>' : ''}
+        ${esgotado ? '<span class="evento-destaque-badge" style="background:#555">Esgotado</span>'  : ''}
       </div>
       <div class="evento-info">
         <div class="evento-data">${formatarData(ev.dataInicio)}</div>
@@ -67,31 +88,28 @@ function renderCard(id, ev) {
         <div class="evento-local">📍 ${ev.local}</div>
         <div class="evento-footer">
           <div class="evento-preco">
-            <small>a partir de</small>
-            ${formatarPreco(precoMin)}
+            ${precoSmall}
+            ${precoLabel}
           </div>
-          ${!esgotado && status !== 'encerrado'
-            ? `<button class="btn-comprar" onclick="event.stopPropagation();abrirModal('${id}')">Comprar</button>`
+          ${!bloqueado
+            ? `<button class="btn-comprar" onclick="event.stopPropagation();abrirModal('${id}')">
+                ${gratuito ? 'Reservar' : 'Comprar'}
+               </button>`
             : `<span style="font-size:0.8rem;color:var(--cinza-texto)">${esgotado ? 'Esgotado' : 'Encerrado'}</span>`
           }
         </div>
         <div class="vagas-bar-wrap">
-          <div class="vagas-bar" style="width:${Math.max(0, Math.min(100, ((ev.vagasRestantes||0)/(ev.totalVagas||1))*100))}%"></div>
+          <div class="vagas-bar" style="width:${pct}%"></div>
         </div>
-        <div style="font-size:0.7rem;color:var(--cinza-texto);margin-top:4px">
-          ${ev.vagasRestantes ?? '?'} vagas restantes
-        </div>
+        <div style="font-size:0.7rem;color:var(--cinza-texto);margin-top:4px">${vagasTxt}</div>
       </div>
     </div>
   `;
 }
 
-/* ── Listener em tempo real ─────────────────────────────────
-   onSnapshot dispara imediatamente e a cada mudança no Firestore
-   sem precisar recarregar a página.
-──────────────────────────────────────────────────────────── */
+/* ── Listener em tempo real ─────────────────────────────────── */
 function iniciarListenerEventos() {
-  const grid    = document.getElementById('eventos-grid');
+  const grid     = document.getElementById('eventos-grid');
   const contador = document.getElementById('contador-eventos');
   const loading  = document.getElementById('loading-eventos');
 
@@ -99,14 +117,11 @@ function iniciarListenerEventos() {
     .orderBy('dataInicio', 'asc')
     .onSnapshot(snapshot => {
       loading && (loading.style.display = 'none');
-
       const docs = [];
       snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
 
-      /* Atualiza contador no hero */
       if (contador) contador.textContent = docs.length + '+';
 
-      /* Renderiza cards */
       if (docs.length === 0) {
         grid.innerHTML = `
           <div style="grid-column:1/-1;text-align:center;padding:4rem;color:var(--cinza-texto)">
@@ -118,13 +133,11 @@ function iniciarListenerEventos() {
 
       grid.innerHTML = docs.map(ev => renderCard(ev.id, ev)).join('');
 
-      /* Reaplica filtro ativo */
       const filtroAtivo = document.querySelector('.filtro-btn.ativo');
       if (filtroAtivo) {
         const cat = filtroAtivo.dataset.cat;
-        if (cat !== 'todos') aplicarFiltro(cat);
+        if (cat && cat !== 'todos') aplicarFiltro(cat);
       }
-
     }, err => {
       console.error('Erro Firestore:', err);
       grid.innerHTML = `<div style="grid-column:1/-1;color:var(--cinza-texto);padding:2rem">
@@ -154,11 +167,11 @@ function abrirModal(id) {
     eventoAtual = ev;
     qtds = (ev.opcoes || []).map(() => 0);
 
-    document.getElementById('modal-emoji').textContent  = ev.emoji || '🎵';
-    document.getElementById('modal-nome').textContent   = ev.nome;
-    document.getElementById('modal-local').textContent  = '📍 ' + ev.local;
-    document.getElementById('modal-data').textContent   = formatarData(ev.dataInicio);
-    document.getElementById('modal-class').textContent  = ev.classificacao || 'Livre';
+    document.getElementById('modal-emoji').textContent = ev.emoji || '🎵';
+    document.getElementById('modal-nome').textContent  = ev.nome;
+    document.getElementById('modal-local').textContent = '📍 ' + ev.local;
+    document.getElementById('modal-data').textContent  = formatarData(ev.dataInicio);
+    document.getElementById('modal-class').textContent = ev.classificacao || 'Livre';
 
     renderOpcoesModal(ev);
     atualizarTotal();
@@ -172,6 +185,7 @@ function renderOpcoesModal(ev) {
   const cont = document.getElementById('modal-opcoes');
   cont.innerHTML = '';
   (ev.opcoes || []).forEach((op, i) => {
+    const precoFmt = op.preco === 0 ? 'Gratuito' : formatarPreco(op.preco);
     cont.innerHTML += `
       <div class="ingresso-tipo" id="tipo-${i}">
         <div class="ingresso-info">
@@ -179,7 +193,7 @@ function renderOpcoesModal(ev) {
           <small>${op.desc || ''}</small>
         </div>
         <div style="display:flex;align-items:center;gap:1rem">
-          <span class="ingresso-preco-tag">${formatarPreco(op.preco)}</span>
+          <span class="ingresso-preco-tag">${precoFmt}</span>
           <div class="ingresso-contador">
             <button class="contador-btn" onclick="mudarQtd(${i},-1)">−</button>
             <span class="contador-num" id="qtd-${i}">0</span>
@@ -201,7 +215,8 @@ function mudarQtd(i, delta) {
 function atualizarTotal() {
   if (!eventoAtual) return;
   const total = (eventoAtual.opcoes || []).reduce((acc, op, i) => acc + op.preco * qtds[i], 0);
-  document.getElementById('modal-total').textContent = formatarPreco(total);
+  document.getElementById('modal-total').textContent =
+    total === 0 ? 'Gratuito' : formatarPreco(total);
 }
 
 function fecharModal(e) {
@@ -214,18 +229,23 @@ function fecharModalBtn() {
 
 function finalizarCompra() {
   if (!eventoAtual) return;
-  const total = (eventoAtual.opcoes || []).reduce((acc, op, i) => acc + op.preco * qtds[i], 0);
-  if (total === 0) { alert('Selecione ao menos 1 ingresso.'); return; }
-
-  /* Em produção: chamar API de pagamento (Stripe, Mercado Pago, etc.) */
-  /* Aqui: diminui vagas no Firestore como demonstração */
+  const total    = (eventoAtual.opcoes || []).reduce((acc, op, i) => acc + op.preco * qtds[i], 0);
   const qtdTotal = qtds.reduce((a, b) => a + b, 0);
-  db.collection('eventos').doc(eventoAtual.id).update({
-    vagasRestantes: firebase.firestore.FieldValue.increment(-qtdTotal)
-  }).then(() => {
-    fecharModalBtn();
-    setTimeout(() => alert(`✅ Compra de ${formatarPreco(total)} iniciada!\nEm produção você seria redirecionado ao checkout.`), 200);
-  });
+
+  if (qtdTotal === 0) { alert('Selecione ao menos 1 ingresso.'); return; }
+
+  /* Só decrementa vagas se não for evento público */
+  if (!eventoAtual.publico && eventoAtual.vagasRestantes !== null) {
+    db.collection('eventos').doc(eventoAtual.id).update({
+      vagasRestantes: firebase.firestore.FieldValue.increment(-qtdTotal)
+    });
+  }
+
+  fecharModalBtn();
+  const msg = total === 0
+    ? `✅ Reserva confirmada! ${qtdTotal} ingresso(s) gratuito(s) reservado(s).`
+    : `✅ Compra de ${formatarPreco(total)} iniciada!\nEm produção você seria redirecionado ao checkout.`;
+  setTimeout(() => alert(msg), 200);
 }
 
 /* ── Init ───────────────────────────────────────────────────── */

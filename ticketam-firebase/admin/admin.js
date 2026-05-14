@@ -1,7 +1,6 @@
 /* ============================================================
    TicketAM – Painel Admin
    Arquivo: admin/admin.js
-   Depende de: ../js/firebase-config.js
    ============================================================ */
 
 /* ── Auth ───────────────────────────────────────────────────── */
@@ -22,17 +21,15 @@ function login() {
   const senha  = document.getElementById('login-senha').value;
   const erro   = document.getElementById('login-erro');
   erro.textContent = '';
-
   auth.signInWithEmailAndPassword(email, senha)
-    .catch(e => { erro.textContent = 'E-mail ou senha incorretos.'; });
+    .catch(() => { erro.textContent = 'E-mail ou senha incorretos.'; });
 }
 
-function logout() {
-  auth.signOut();
-}
+function logout() { auth.signOut(); }
 
 /* ── Utilitários ────────────────────────────────────────────── */
 function formatarPreco(v) {
+  if (v === 0) return 'Gratuito';
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
@@ -47,8 +44,8 @@ function inputParaTs(str) {
 }
 
 /* ── Estado do formulário ───────────────────────────────────── */
-let editandoId  = null;
-let opcoes      = [{ tipo: '', preco: 0, desc: '' }];
+let editandoId = null;
+let opcoes     = [{ tipo: '', preco: 0, desc: '' }];
 
 function novaOpcao() {
   opcoes.push({ tipo: '', preco: 0, desc: '' });
@@ -64,12 +61,22 @@ function renderOpcoes() {
   const cont = document.getElementById('opcoes-lista');
   cont.innerHTML = opcoes.map((op, i) => `
     <div class="opcao-row">
-      <input  type="text"   placeholder="Tipo (ex: Pista)"   value="${op.tipo}"  oninput="opcoes[${i}].tipo=this.value"  />
-      <input  type="number" placeholder="Preço (R$)"         value="${op.preco || ''}" oninput="opcoes[${i}].preco=parseFloat(this.value)||0" />
-      <input  type="text"   placeholder="Descrição opcional" value="${op.desc}"  oninput="opcoes[${i}].desc=this.value"  />
+      <input type="text"   placeholder="Tipo (ex: Pista)"   value="${op.tipo}"        oninput="opcoes[${i}].tipo=this.value" />
+      <input type="number" placeholder="Preço (0 = grátis)" value="${op.preco ?? ''}" min="0" step="0.01"
+             oninput="opcoes[${i}].preco=parseFloat(this.value)||0" />
+      <input type="text"   placeholder="Descrição opcional" value="${op.desc}"        oninput="opcoes[${i}].desc=this.value" />
       <button class="btn-remover" onclick="removerOpcao(${i})" title="Remover">×</button>
     </div>
   `).join('');
+}
+
+/* ── Listener de checkbox "evento público" ──────────────────── */
+function togglePublico() {
+  const pub   = document.getElementById('f-publico').checked;
+  const wrap  = document.getElementById('vagas-wrap');
+  wrap.style.opacity       = pub ? '0.4' : '1';
+  wrap.style.pointerEvents = pub ? 'none' : 'auto';
+  if (pub) document.getElementById('f-vagas').value = '';
 }
 
 /* ── CRUD Firestore ─────────────────────────────────────────── */
@@ -89,7 +96,16 @@ function carregarEventos() {
         const fim = ev.dataFim?.toDate    ? ev.dataFim.toDate()    : new Date();
         const now = new Date();
         let statusTxt = now < ini ? '🟡 Em breve' : now <= fim ? '🔴 Ao vivo' : '⚫ Encerrado';
-        const precos  = (ev.opcoes || []).map(o => formatarPreco(o.preco)).join(' · ');
+
+        /* mostra preços ou "Gratuito" */
+        const precos = (ev.opcoes || [])
+          .map(o => o.preco === 0 ? 'Grátis' : formatarPreco(o.preco))
+          .join(' · ');
+
+        /* vagas: pode ser ilimitado */
+        const vagasTxt = ev.publico
+          ? 'Evento público (vagas ilimitadas)'
+          : `Vagas: ${ev.vagasRestantes ?? '?'} / ${ev.totalVagas ?? '?'}`;
 
         const row = document.createElement('div');
         row.className = 'ev-row';
@@ -99,12 +115,12 @@ function carregarEventos() {
             <div>
               <strong>${ev.nome}</strong>
               <small>${statusTxt} &nbsp;·&nbsp; ${ev.local} &nbsp;·&nbsp; ${precos}</small>
-              <small>Vagas: ${ev.vagasRestantes ?? '?'} / ${ev.totalVagas ?? '?'}</small>
+              <small>${vagasTxt}</small>
             </div>
           </div>
           <div class="ev-row-acoes">
-            <button class="btn-editar" onclick="abrirEdicao('${doc.id}')">Editar</button>
-            <button class="btn-excluir" onclick="excluirEvento('${doc.id}', '${ev.nome}')">Excluir</button>
+            <button class="btn-editar"  onclick="abrirEdicao('${doc.id}')">Editar</button>
+            <button class="btn-excluir" onclick="excluirEvento('${doc.id}','${ev.nome}')">Excluir</button>
           </div>
         `;
         lista.appendChild(row);
@@ -117,6 +133,8 @@ function abrirFormulario() {
   opcoes     = [{ tipo: '', preco: 0, desc: '' }];
   document.getElementById('form-titulo').textContent = 'Novo evento';
   document.getElementById('form-evento').reset();
+  document.getElementById('f-publico').checked = false;
+  togglePublico();
   renderOpcoes();
   document.getElementById('modal-form').style.display = 'flex';
 }
@@ -128,17 +146,19 @@ function abrirEdicao(id) {
     editandoId = id;
     opcoes     = JSON.parse(JSON.stringify(ev.opcoes || []));
 
-    document.getElementById('form-titulo').textContent = 'Editar evento';
-    document.getElementById('f-nome').value       = ev.nome       || '';
-    document.getElementById('f-local').value      = ev.local      || '';
-    document.getElementById('f-emoji').value      = ev.emoji      || '';
-    document.getElementById('f-cor').value        = ''; /* cor é gradient, só texto */
-    document.getElementById('f-categoria').value  = ev.categoria  || 'shows';
-    document.getElementById('f-catLabel').value   = ev.categoriaLabel || '';
-    document.getElementById('f-class').value      = ev.classificacao  || 'Livre';
-    document.getElementById('f-vagas').value      = ev.totalVagas     || 100;
-    document.getElementById('f-inicio').value     = tsParaInput(ev.dataInicio);
-    document.getElementById('f-fim').value        = tsParaInput(ev.dataFim);
+    document.getElementById('form-titulo').textContent   = 'Editar evento';
+    document.getElementById('f-nome').value              = ev.nome            || '';
+    document.getElementById('f-local').value             = ev.local           || '';
+    document.getElementById('f-emoji').value             = ev.emoji           || '';
+    document.getElementById('f-cor').value               = ev.corBg           || '';
+    document.getElementById('f-categoria').value         = ev.categoria       || 'shows';
+    document.getElementById('f-catLabel').value          = ev.categoriaLabel  || '';
+    document.getElementById('f-class').value             = ev.classificacao   || 'Livre';
+    document.getElementById('f-vagas').value             = ev.totalVagas      || '';
+    document.getElementById('f-inicio').value            = tsParaInput(ev.dataInicio);
+    document.getElementById('f-fim').value               = tsParaInput(ev.dataFim);
+    document.getElementById('f-publico').checked         = ev.publico         || false;
+    togglePublico();
     renderOpcoes();
     document.getElementById('modal-form').style.display = 'flex';
   });
@@ -149,23 +169,32 @@ function fecharFormulario() {
 }
 
 function salvarEvento() {
-  const nome      = document.getElementById('f-nome').value.trim();
-  const local     = document.getElementById('f-local').value.trim();
-  const emoji     = document.getElementById('f-emoji').value.trim() || '🎵';
-  const categoria = document.getElementById('f-categoria').value;
-  const catLabel  = document.getElementById('f-catLabel').value.trim() || categoria;
-  const classif   = document.getElementById('f-class').value.trim() || 'Livre';
-  const vagas     = parseInt(document.getElementById('f-vagas').value) || 100;
-  const inicio    = document.getElementById('f-inicio').value;
-  const fim       = document.getElementById('f-fim').value;
-  const msgEl     = document.getElementById('form-msg');
+  const nome     = document.getElementById('f-nome').value.trim();
+  const local    = document.getElementById('f-local').value.trim();
+  const emoji    = document.getElementById('f-emoji').value.trim()  || '🎵';
+  const corBg    = document.getElementById('f-cor').value.trim()    || 'linear-gradient(135deg,#1a1a2e,#16213e)';
+  const categoria= document.getElementById('f-categoria').value;
+  const catLabel = document.getElementById('f-catLabel').value.trim() || categoria;
+  const classif  = document.getElementById('f-class').value.trim()  || 'Livre';
+  const publico  = document.getElementById('f-publico').checked;
+  const vagasVal = parseInt(document.getElementById('f-vagas').value);
+  const vagas    = publico ? null : (isNaN(vagasVal) ? 100 : vagasVal);
+  const inicio   = document.getElementById('f-inicio').value;
+  const fim      = document.getElementById('f-fim').value;
+  const msgEl    = document.getElementById('form-msg');
 
+  /* ── Validações ─────────────────────────────────── */
   if (!nome || !local || !inicio || !fim) {
     msgEl.textContent = '⚠️ Preencha nome, local, início e fim.';
     return;
   }
-  if (opcoes.length === 0 || opcoes.some(o => !o.tipo || o.preco <= 0)) {
-    msgEl.textContent = '⚠️ Adicione ao menos 1 tipo de ingresso com preço válido.';
+  if (opcoes.length === 0 || opcoes.some(o => !o.tipo)) {
+    msgEl.textContent = '⚠️ Adicione ao menos 1 tipo de ingresso com nome.';
+    return;
+  }
+  /* preço 0 é permitido (evento gratuito) — só rejeita negativo */
+  if (opcoes.some(o => o.preco < 0)) {
+    msgEl.textContent = '⚠️ O preço não pode ser negativo.';
     return;
   }
 
@@ -175,14 +204,20 @@ function salvarEvento() {
     nome,
     local,
     emoji,
+    corBg,
     categoria,
     categoriaLabel: catLabel,
     classificacao:  classif,
-    totalVagas:     vagas,
+    publico:        publico,
+    totalVagas:     vagas,            /* null = ilimitado */
     dataInicio:     inputParaTs(inicio),
     dataFim:        inputParaTs(fim),
-    opcoes:         opcoes.map(o => ({ tipo: o.tipo, preco: Number(o.preco), desc: o.desc || '' })),
-    atualizadoEm:   firebase.firestore.FieldValue.serverTimestamp(),
+    opcoes: opcoes.map(o => ({
+      tipo:  o.tipo,
+      preco: Number(o.preco) || 0,   /* garante que string vazia vira 0 */
+      desc:  o.desc || ''
+    })),
+    atualizadoEm: firebase.firestore.FieldValue.serverTimestamp(),
   };
 
   if (editandoId) {
@@ -190,6 +225,7 @@ function salvarEvento() {
       .then(() => { msgEl.textContent = '✅ Evento atualizado!'; setTimeout(fecharFormulario, 1200); })
       .catch(e  => { msgEl.textContent = '❌ Erro: ' + e.message; });
   } else {
+    /* vagas restantes = total (ou null se ilimitado) */
     dados.vagasRestantes = vagas;
     dados.criadoEm       = firebase.firestore.FieldValue.serverTimestamp();
     db.collection('eventos').add(dados)

@@ -8,9 +8,6 @@
 let eventoAtual = null;
 let qtds        = [];
 
-let eventoAtual = null;
-let qtds        = [];
-
 /* ── Utilitários ────────────────────────────────────────────── */
 function formatarPreco(valor) {
   if (valor === 0 || valor === null || valor === undefined) return 'Gratuito';

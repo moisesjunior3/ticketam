@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": ".",
+    "public": "ticketam-firebase",
     "ignore": [
       "firebase.json",
       "**/.*",

@@ -1,12 +1,58 @@
 /* ============================================================
    TicketAM – Lógica principal do site público
    Arquivo: js/app.js
-   Depende de: firebase-config.js
    ============================================================ */
 
+/* ── Configuração EmailJS ───────────────────────────────────── */
+const EMAILJS_SERVICE_ID  = 'service_uemtw6p';
+const EMAILJS_TEMPLATE_ID = 'template_3sdhkri';
+const EMAILJS_PUBLIC_KEY  = 'LjlC49jmhi65r9qny';
+
 /* ── Estado global ─────────────────────────────────────────── */
-let eventoAtual = null;
-let qtds        = [];
+let eventoAtual  = null;
+let qtds         = [];
+let usuarioAtual = null;
+
+/* ── Init EmailJS ───────────────────────────────────────────── */
+emailjs.init(EMAILJS_PUBLIC_KEY);
+
+/* ── Auth Google ────────────────────────────────────────────── */
+const provider = new firebase.auth.GoogleAuthProvider();
+
+function loginGoogle() {
+  auth.signInWithPopup(provider).catch(err => {
+    console.error('Erro no login:', err);
+    alert('Não foi possível fazer login. Tente novamente.');
+  });
+}
+
+function logout() {
+  auth.signOut();
+}
+
+/* Observa mudanças de autenticação */
+auth.onAuthStateChanged(user => {
+  usuarioAtual = user;
+  atualizarNavbar(user);
+});
+
+function atualizarNavbar(user) {
+  const btnNav     = document.getElementById('btn-entrar');
+  const perfilWrap = document.getElementById('perfil-wrap');
+
+  if (!btnNav || !perfilWrap) return;
+
+  if (user) {
+    btnNav.style.display      = 'none';
+    perfilWrap.style.display  = 'flex';
+    document.getElementById('perfil-nome').textContent = user.displayName?.split(' ')[0] || 'Usuário';
+    document.getElementById('perfil-foto').src =
+      user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U') + '&background=1D9E75&color=fff';
+  } else {
+    btnNav.style.display      = 'block';
+    perfilWrap.style.display  = 'none';
+  }
+}
 
 /* ── Utilitários ────────────────────────────────────────────── */
 function formatarPreco(valor) {
@@ -44,54 +90,44 @@ function badgeStatus(status) {
 
 /* ── Renderiza card ─────────────────────────────────────────── */
 function renderCard(id, ev) {
-  const status   = statusEvento(ev.dataInicio, ev.dataFim);
-  const opcoes   = ev.opcoes || [];
-  const precos   = opcoes.map(o => o.preco);
-  const precoMin = precos.length ? Math.min(...precos) : 0;
-  const gratuito = precos.every(p => p === 0);
-
-  /* vagas: público = ilimitado, sem controle */
+  const status       = statusEvento(ev.dataInicio, ev.dataFim);
+  const opcoes       = ev.opcoes || [];
+  const precos       = opcoes.map(o => o.preco);
+  const precoMin     = precos.length ? Math.min(...precos) : 0;
+  const gratuito     = precos.every(p => p === 0);
   const publico      = ev.publico === true;
-  const vagasRestantes = publico ? Infinity : (ev.vagasRestantes ?? 0);
+  const vagasRest    = publico ? Infinity : (ev.vagasRestantes ?? 0);
   const totalVagas   = publico ? Infinity : (ev.totalVagas ?? 1);
-  const esgotado     = !publico && vagasRestantes <= 0;
-  const pct          = publico ? 100 : Math.max(0, Math.min(100, (vagasRestantes / totalVagas) * 100));
-
-  const vagasTxt = publico
+  const esgotado     = !publico && vagasRest <= 0;
+  const pct          = publico ? 100 : Math.max(0, Math.min(100, (vagasRest / totalVagas) * 100));
+  const vagasTxt     = publico
     ? 'Evento público — entrada livre'
-    : `${vagasRestantes} vaga${vagasRestantes !== 1 ? 's' : ''} restante${vagasRestantes !== 1 ? 's' : ''}`;
-
-  const precoLabel = gratuito ? 'Gratuito' : formatarPreco(precoMin);
-  const precoSmall = gratuito ? '' : '<small>a partir de</small>';
-
-  const bloqueado = esgotado || status === 'encerrado';
+    : `${vagasRest} vaga${vagasRest !== 1 ? 's' : ''} restante${vagasRest !== 1 ? 's' : ''}`;
+  const precoLabel   = gratuito ? 'Gratuito' : formatarPreco(precoMin);
+  const precoSmall   = gratuito ? '' : '<small>a partir de</small>';
+  const bloqueado    = esgotado || status === 'encerrado';
 
   return `
     <div class="evento-card ${status === 'encerrado' ? 'encerrado' : ''}"
-         data-cat="${ev.categoria || 'outros'}"
-         data-id="${id}"
+         data-cat="${ev.categoria || 'outros'}" data-id="${id}"
          onclick="${bloqueado ? '' : `abrirModal('${id}')`}"
          style="${bloqueado ? 'cursor:not-allowed;opacity:0.55' : ''}">
       <div class="evento-imagem" style="background:${ev.corBg || 'linear-gradient(135deg,#161616,#222)'}">
         <span style="font-size:3.5rem">${ev.emoji || '🎵'}</span>
         <span class="evento-badge">${ev.categoriaLabel || ev.categoria || 'Evento'}</span>
         ${badgeStatus(status)}
-        ${gratuito ? '<span class="evento-destaque-badge" style="background:var(--verde)">Gratuito</span>' : ''}
-        ${esgotado ? '<span class="evento-destaque-badge" style="background:#555">Esgotado</span>'  : ''}
+        ${gratuito  ? '<span class="evento-destaque-badge" style="background:var(--verde)">Gratuito</span>' : ''}
+        ${esgotado  ? '<span class="evento-destaque-badge" style="background:#555">Esgotado</span>'         : ''}
       </div>
       <div class="evento-info">
         <div class="evento-data">${formatarData(ev.dataInicio)}</div>
         <div class="evento-nome">${ev.nome}</div>
         <div class="evento-local">📍 ${ev.local}</div>
         <div class="evento-footer">
-          <div class="evento-preco">
-            ${precoSmall}
-            ${precoLabel}
-          </div>
+          <div class="evento-preco">${precoSmall}${precoLabel}</div>
           ${!bloqueado
             ? `<button class="btn-comprar" onclick="event.stopPropagation();abrirModal('${id}')">
-                ${gratuito ? 'Reservar' : 'Comprar'}
-               </button>`
+                ${gratuito ? 'Reservar' : 'Comprar'}</button>`
             : `<span style="font-size:0.8rem;color:var(--cinza-texto)">${esgotado ? 'Esgotado' : 'Encerrado'}</span>`
           }
         </div>
@@ -100,8 +136,7 @@ function renderCard(id, ev) {
         </div>
         <div style="font-size:0.7rem;color:var(--cinza-texto);margin-top:4px">${vagasTxt}</div>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 /* ── Listener em tempo real ─────────────────────────────────── */
@@ -116,7 +151,6 @@ function iniciarListenerEventos() {
       loading && (loading.style.display = 'none');
       const docs = [];
       snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
-
       if (contador) contador.textContent = docs.length + '+';
 
       if (docs.length === 0) {
@@ -127,7 +161,6 @@ function iniciarListenerEventos() {
           </div>`;
         return;
       }
-
       grid.innerHTML = docs.map(ev => renderCard(ev.id, ev)).join('');
 
       const filtroAtivo = document.querySelector('.filtro-btn.ativo');
@@ -138,7 +171,7 @@ function iniciarListenerEventos() {
     }, err => {
       console.error('Erro Firestore:', err);
       grid.innerHTML = `<div style="grid-column:1/-1;color:var(--cinza-texto);padding:2rem">
-        ⚠️ Erro ao carregar eventos. Verifique sua configuração do Firebase.</div>`;
+        ⚠️ Erro ao carregar eventos.</div>`;
     });
 }
 
@@ -149,7 +182,6 @@ function filtrar(btn, cat) {
   btn.dataset.cat = cat;
   aplicarFiltro(cat);
 }
-
 function aplicarFiltro(cat) {
   document.querySelectorAll('.evento-card').forEach(card => {
     card.style.display = (cat === 'todos' || card.dataset.cat === cat) ? 'block' : 'none';
@@ -170,9 +202,18 @@ function abrirModal(id) {
     document.getElementById('modal-data').textContent  = formatarData(ev.dataInicio);
     document.getElementById('modal-class').textContent = ev.classificacao || 'Livre';
 
+    /* Aviso de e-mail se logado */
+    const avisoEmail = document.getElementById('modal-aviso-email');
+    if (avisoEmail) {
+      avisoEmail.style.display = usuarioAtual ? 'flex' : 'none';
+      if (usuarioAtual) {
+        avisoEmail.querySelector('span').textContent =
+          `Confirmação será enviada para ${usuarioAtual.email}`;
+      }
+    }
+
     renderOpcoesModal(ev);
     atualizarTotal();
-
     document.getElementById('overlay').classList.add('aberto');
     document.body.style.overflow = 'hidden';
   });
@@ -224,14 +265,14 @@ function fecharModalBtn() {
   document.body.style.overflow = '';
 }
 
+/* ── Finalizar compra + EmailJS ─────────────────────────────── */
 function finalizarCompra() {
   if (!eventoAtual) return;
   const total    = (eventoAtual.opcoes || []).reduce((acc, op, i) => acc + op.preco * qtds[i], 0);
   const qtdTotal = qtds.reduce((a, b) => a + b, 0);
-
   if (qtdTotal === 0) { alert('Selecione ao menos 1 ingresso.'); return; }
 
-  /* Só decrementa vagas se não for evento público */
+  /* Decrementa vagas se necessário */
   if (!eventoAtual.publico && eventoAtual.vagasRestantes !== null) {
     db.collection('eventos').doc(eventoAtual.id).update({
       vagasRestantes: firebase.firestore.FieldValue.increment(-qtdTotal)
@@ -239,9 +280,35 @@ function finalizarCompra() {
   }
 
   fecharModalBtn();
+
+  /* Monta resumo dos ingressos */
+  const resumoIngressos = eventoAtual.opcoes
+    .map((op, i) => qtds[i] > 0
+      ? `${qtds[i]}x ${op.tipo} (${op.preco === 0 ? 'Gratuito' : formatarPreco(op.preco)})`
+      : null)
+    .filter(Boolean)
+    .join(', ');
+
+  /* Envia e-mail se usuário estiver logado */
+  if (usuarioAtual?.email) {
+    const templateParams = {
+      usuario_nome: usuarioAtual.displayName || 'Cliente',
+      usuario_email: usuarioAtual.email,
+      evento_nome:  eventoAtual.nome,
+      evento_local: eventoAtual.local,
+      evento_data:  formatarData(eventoAtual.dataInicio),
+      ingressos:    resumoIngressos,
+      total:        total === 0 ? 'Gratuito' : formatarPreco(total),
+    };
+
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+      .then(() => console.log('E-mail enviado!'))
+      .catch(err => console.error('Erro ao enviar e-mail:', err));
+  }
+
   const msg = total === 0
-    ? `✅ Reserva confirmada! ${qtdTotal} ingresso(s) gratuito(s) reservado(s).`
-    : `✅ Compra de ${formatarPreco(total)} iniciada!\nEm produção você seria redirecionado ao checkout.`;
+    ? `✅ Reserva confirmada!\n${usuarioAtual ? 'Confirmação enviada para ' + usuarioAtual.email : 'Faça login para receber confirmação por e-mail.'}`
+    : `✅ Compra iniciada!\n${usuarioAtual ? 'Confirmação enviada para ' + usuarioAtual.email : 'Faça login para receber confirmação por e-mail.'}`;
   setTimeout(() => alert(msg), 200);
 }
 

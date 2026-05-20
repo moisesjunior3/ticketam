@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* ── Configuração EmailJS ───────────────────────────────────── */
-const EMAILJS_SERVICE_ID  = 'service_uemtw6p';
+const EMAILJS_SERVICE_ID  = 'service_8a6frn9';
 const EMAILJS_TEMPLATE_ID = 'template_3sdhkri';
 const EMAILJS_PUBLIC_KEY  = 'LjlC49jmhi65r9qny';
 

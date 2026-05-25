@@ -84,6 +84,19 @@ nav {
 }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
+/* Imagem de fundo */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/assets/hero-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.99;
+  z-index: 0;
+}
+
 .hero h1 {
   font-family: 'Syne', sans-serif; font-size: clamp(3rem, 8vw, 6.5rem);
   font-weight: 800; line-height: 0.95; letter-spacing: -0.04em; margin-bottom: 1.5rem;

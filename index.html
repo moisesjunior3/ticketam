@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TicketAM – Ingressos em Manaus</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/mapa.css" />
 </head>
 <body>
 
@@ -16,11 +21,10 @@
     <div class="logo">Ticket<span>AM</span></div>
     <div class="nav-links">
       <a href="#eventos">Eventos</a>
-      <a href="#">Artistas</a>
+      <a href="#mapa">Mapa</a>
       <a href="#">Como funciona</a>
     </div>
 
-    <!-- Botão entrar (visitante) -->
     <button id="btn-entrar" class="btn-nav" onclick="loginGoogle()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:6px">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -31,7 +35,6 @@
       Entrar com Google
     </button>
 
-    <!-- Perfil do usuário logado -->
     <div id="perfil-wrap" style="display:none;align-items:center;gap:10px">
       <img id="perfil-foto" src="" alt="foto" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--verde)" />
       <span id="perfil-nome" style="font-size:0.85rem;color:var(--branco)"></span>
@@ -94,6 +97,20 @@
     </div>
   </section>
 
+  <!-- ══════════════════════════════════════
+       MAPA DE EVENTOS
+  ══════════════════════════════════════ -->
+  <section class="section" id="mapa" style="padding-top:0">
+    <div class="section-header">
+      <h2 class="section-title">Eventos no mapa</h2>
+      <span style="font-size:0.875rem;color:var(--cinza-texto)">📍 Clique no pin para ver detalhes</span>
+    </div>
+    <div class="mapa-wrap">
+      <div id="mapa-leaflet"></div>
+      <div class="mapa-legenda" id="mapa-legenda"></div>
+    </div>
+  </section>
+
   <!-- BANNER CTA -->
   <div class="banner-cta">
     <div class="banner-text">
@@ -127,9 +144,7 @@
     <span>CNPJ 00.000.000/0001-00</span>
   </div>
 
-  <!-- ══════════════════════════════════════
-       MODAL DE COMPRA
-  ══════════════════════════════════════ -->
+  <!-- MODAL DE COMPRA -->
   <div class="overlay" id="overlay" onclick="fecharModal(event)">
     <div class="modal" id="modal">
       <div class="modal-header">
@@ -150,14 +165,10 @@
             <div class="info-box-valor" id="modal-class"></div>
           </div>
         </div>
-
-        <!-- Aviso de e-mail (só aparece se logado) -->
         <div id="modal-aviso-email" style="display:none;align-items:center;gap:8px;background:rgba(29,158,117,0.08);border:0.5px solid rgba(29,158,117,0.2);border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem">
           <span style="font-size:1.1rem">📧</span>
           <span style="font-size:0.8rem;color:var(--cinza-texto)"></span>
         </div>
-
-        <!-- Aviso para não logados -->
         <div id="modal-aviso-login" style="display:flex;align-items:center;gap:8px;background:rgba(239,159,39,0.08);border:0.5px solid rgba(239,159,39,0.2);border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem">
           <span style="font-size:1.1rem">💡</span>
           <span style="font-size:0.8rem;color:var(--cinza-texto)">
@@ -165,7 +176,6 @@
             para receber confirmação por e-mail
           </span>
         </div>
-
         <div class="ingressos-opcoes" id="modal-opcoes"></div>
         <div class="modal-total">
           <span class="total-label">Total estimado</span>
@@ -178,20 +188,14 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════
-       SCRIPTS
-  ══════════════════════════════════════ -->
-  <!-- Firebase SDKs -->
+  <!-- SCRIPTS -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-
-  <!-- EmailJS -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-
-  <!-- Config + App -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/app.js"></script>
-
+  <script src="js/mapa.js"></script>
 </body>
 </html>

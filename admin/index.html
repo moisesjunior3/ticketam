@@ -27,7 +27,7 @@
     </div>
   </div>
 
-  <!-- PAINEL ADMIN -->
+  <!-- PAINEL -->
   <div id="tela-admin">
     <nav class="admin-nav">
       <div class="admin-logo">Ticket<span>AM</span> <small>Admin</small></div>
@@ -36,7 +36,6 @@
         <button class="btn-logout" onclick="logout()">Sair</button>
       </div>
     </nav>
-
     <div class="admin-body">
       <div class="admin-header">
         <h1>Eventos</h1>
@@ -64,7 +63,18 @@
 
         <div class="f-campo">
           <label>Local *</label>
-          <input type="text" id="f-local" placeholder="Ex: Teatro Amazonas, Centro" />
+          <input type="text" id="f-local" placeholder="Ex: Teatro Amazonas, Centro, Manaus" />
+        </div>
+
+        <!-- ── DESCRIÇÃO ── -->
+        <div class="f-campo">
+          <label>Descrição do evento</label>
+          <textarea id="f-descricao" rows="3"
+            placeholder="Descreva o evento: artistas, atrações, informações importantes para o público..."
+            style="padding:0.65rem 0.9rem;background:rgba(255,255,255,0.04);border:0.5px solid var(--cinza-borda);border-radius:10px;color:var(--branco);font-family:'DM Sans',sans-serif;font-size:0.9rem;resize:vertical;transition:border-color 0.2s;width:100%"
+            onfocus="this.style.borderColor='var(--verde)'"
+            onblur="this.style.borderColor='var(--cinza-borda)'"></textarea>
+          <small style="color:var(--cinza-texto);font-size:0.72rem">Aparece no popup do mapa e no card do evento</small>
         </div>
 
         <div class="form-row">
@@ -85,29 +95,21 @@
           </div>
         </div>
 
-        <!-- Cor de fundo com exemplos prontos -->
+        <!-- Cor de fundo -->
         <div class="f-campo">
-          <label>Cor de fundo do card (CSS gradient)</label>
+          <label>Cor de fundo do card</label>
           <input type="text" id="f-cor" placeholder="linear-gradient(135deg, #1a1a2e, #16213e)" />
           <div class="gradientes-hint">
             <span style="font-size:0.72rem;color:var(--cinza-texto)">Clique para usar:</span>
             <div class="gradientes-grid">
-              <button type="button" class="grad-btn" style="background:linear-gradient(135deg,#1a1a2e,#16213e)"
-                onclick="document.getElementById('f-cor').value='linear-gradient(135deg,#1a1a2e,#16213e)'">Show/Noite</button>
-              <button type="button" class="grad-btn" style="background:linear-gradient(135deg,#0a2e1a,#1a4a2a)"
-                onclick="document.getElementById('f-cor').value='linear-gradient(135deg,#0a2e1a,#1a4a2a)'">Festival/Verde</button>
-              <button type="button" class="grad-btn" style="background:linear-gradient(135deg,#2e0a2a,#4a1a44)"
-                onclick="document.getElementById('f-cor').value='linear-gradient(135deg,#2e0a2a,#4a1a44)'">Teatro/Roxo</button>
-              <button type="button" class="grad-btn" style="background:linear-gradient(135deg,#00182e,#003060)"
-                onclick="document.getElementById('f-cor').value='linear-gradient(135deg,#00182e,#003060)'">Esporte/Azul</button>
-              <button type="button" class="grad-btn" style="background:linear-gradient(135deg,#1a1500,#2e2600)"
-                onclick="document.getElementById('f-cor').value='linear-gradient(135deg,#1a1500,#2e2600)'">Humor/Dourado</button>
-              <button type="button" class="grad-btn" style="background:linear-gradient(135deg,#2e1a00,#4a3000)"
-                onclick="document.getElementById('f-cor').value='linear-gradient(135deg,#2e1a00,#4a3000)'">Forró/Laranja</button>
-              <button type="button" class="grad-btn" style="background:linear-gradient(135deg,#1a001a,#2e0030)"
-                onclick="document.getElementById('f-cor').value='linear-gradient(135deg,#1a001a,#2e0030)'">Pagode/Rosa</button>
-              <button type="button" class="grad-btn" style="background:linear-gradient(135deg,#00102e,#001a4a)"
-                onclick="document.getElementById('f-cor').value='linear-gradient(135deg,#00102e,#001a4a)'">Pop/Azul Esc.</button>
+              <button type="button" class="grad-btn" style="background:linear-gradient(135deg,#1a1a2e,#16213e)" onclick="document.getElementById('f-cor').value='linear-gradient(135deg,#1a1a2e,#16213e)'">Show/Noite</button>
+              <button type="button" class="grad-btn" style="background:linear-gradient(135deg,#0a2e1a,#1a4a2a)" onclick="document.getElementById('f-cor').value='linear-gradient(135deg,#0a2e1a,#1a4a2a)'">Festival/Verde</button>
+              <button type="button" class="grad-btn" style="background:linear-gradient(135deg,#2e0a2a,#4a1a44)" onclick="document.getElementById('f-cor').value='linear-gradient(135deg,#2e0a2a,#4a1a44)'">Teatro/Roxo</button>
+              <button type="button" class="grad-btn" style="background:linear-gradient(135deg,#00182e,#003060)" onclick="document.getElementById('f-cor').value='linear-gradient(135deg,#00182e,#003060)'">Esporte/Azul</button>
+              <button type="button" class="grad-btn" style="background:linear-gradient(135deg,#1a1500,#2e2600)" onclick="document.getElementById('f-cor').value='linear-gradient(135deg,#1a1500,#2e2600)'">Humor/Dourado</button>
+              <button type="button" class="grad-btn" style="background:linear-gradient(135deg,#2e1a00,#4a3000)" onclick="document.getElementById('f-cor').value='linear-gradient(135deg,#2e1a00,#4a3000)'">Forró/Laranja</button>
+              <button type="button" class="grad-btn" style="background:linear-gradient(135deg,#1a001a,#2e0030)" onclick="document.getElementById('f-cor').value='linear-gradient(135deg,#1a001a,#2e0030)'">Pagode/Rosa</button>
+              <button type="button" class="grad-btn" style="background:linear-gradient(135deg,#00102e,#001a4a)" onclick="document.getElementById('f-cor').value='linear-gradient(135deg,#00102e,#001a4a)'">Pop/Azul Esc.</button>
             </div>
           </div>
         </div>
@@ -128,7 +130,6 @@
             <label>Total de vagas</label>
             <input type="number" id="f-vagas" placeholder="100" min="1" />
           </div>
-          <!-- Checkbox evento público -->
           <div class="f-campo" style="justify-content:flex-end;padding-bottom:4px">
             <label style="flex-direction:row;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.85rem;color:var(--branco)">
               <input type="checkbox" id="f-publico" onchange="togglePublico()"
@@ -153,7 +154,7 @@
         <!-- Tipos de ingresso -->
         <div>
           <div class="opcoes-header">
-            <span>Tipos de ingresso * &nbsp;<small style="color:var(--cinza-texto);text-transform:none;letter-spacing:0">(coloque 0 no preço para ingresso gratuito)</small></span>
+            <span>Tipos de ingresso * &nbsp;<small style="color:var(--cinza-texto);text-transform:none;letter-spacing:0">(coloque 0 para gratuito)</small></span>
             <button type="button" class="btn-add-opcao" onclick="novaOpcao()">+ Adicionar tipo</button>
           </div>
           <div id="opcoes-lista"></div>
@@ -169,7 +170,6 @@
     </div>
   </div>
 
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>

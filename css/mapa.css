@@ -1,5 +1,6 @@
 /* ============================================================
-   TicketAM – Estilos do Mapa (adicionar ao final do style.css)
+   TicketAM – Estilos do Mapa
+   Arquivo: css/mapa.css
    ============================================================ */
 
 /* ── Seção do mapa ──────────────────────────────────────────── */
@@ -18,6 +19,19 @@
   width: 100%;
   border-radius: 0;
   z-index: 1;
+}
+
+/* ── Atribuição discreta ────────────────────────────────────── */
+.leaflet-control-attribution {
+  background: rgba(0,0,0,0.25) !important;
+  backdrop-filter: blur(4px);
+  color: rgba(255,255,255,0.3) !important;
+  font-size: 9px !important;
+  padding: 1px 6px !important;
+  border-radius: 4px 0 0 0 !important;
+}
+.leaflet-control-attribution a {
+  color: rgba(255,255,255,0.3) !important;
 }
 
 /* ── Legenda lateral ────────────────────────────────────────── */
@@ -46,13 +60,12 @@
   transition: border-color 0.2s, background 0.2s;
   background: transparent;
 }
-
 .legenda-item:hover {
   border-color: var(--verde);
   background: rgba(29,158,117,0.05);
 }
 
-/* ── Popup customizado do Leaflet ───────────────────────────── */
+/* ── Popup customizado ──────────────────────────────────────── */
 .ticketam-popup .leaflet-popup-content-wrapper {
   background: #fff;
   border-radius: 12px;
@@ -60,20 +73,9 @@
   padding: 0;
   border: none;
 }
-
-.ticketam-popup .leaflet-popup-content {
-  margin: 12px 14px;
-}
-
-.ticketam-popup .leaflet-popup-tip {
-  background: #fff;
-}
-
-.ticketam-popup .leaflet-popup-close-button {
-  color: #888;
-  font-size: 16px;
-  padding: 6px 8px;
-}
+.ticketam-popup .leaflet-popup-content { margin: 12px 14px; }
+.ticketam-popup .leaflet-popup-tip { background: #fff; }
+.ticketam-popup .leaflet-popup-close-button { color: #888; font-size: 16px; padding: 6px 8px; }
 
 /* ── Responsivo ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
@@ -82,7 +84,6 @@
     grid-template-rows: 320px auto;
     height: auto;
   }
-
   .mapa-legenda {
     border-left: none;
     border-top: 0.5px solid var(--cinza-borda);
